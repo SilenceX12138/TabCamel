@@ -173,159 +173,6 @@ class BaseTransform:
         raise NotImplementedError
 
 
-class NumericTransform(BaseTransform):
-
-    def __init__(
-        self,
-        numerical_feature_list: list,
-        strategy: str,
-        include_categorical: bool,
-        train_num_samples: int = None,
-    ):
-        """Initialises the StandardiseTransform class."""
-        super().__init__()
-
-        self.numerical_feature_list = numerical_feature_list
-        self.include_categorical = include_categorical
-        self.train_num_samples = train_num_samples
-
-        match strategy:
-            case "standard":
-                self._scaler = StandardScaler()
-            case "minmax":
-                self._scaler = MinMaxScaler()
-            case "quantile":
-                if train_num_samples is None:
-                    raise ValueError(f"train_num_samples must be provided for {strategy} strategy.")
-                # The settings are consistent with TabZilla: https://github.com/naszilla/tabzilla/blob/main/TabZilla/tabzilla_data_processing.py#L134
-                self._scaler = QuantileTransformer(n_quantiles=min(self.train_num_samples, 1000))
-
-    def _fit(
-        self,
-        data_df: pd.DataFrame,
-    ):
-        """Fits the transform to the data.
-
-        Args:
-            data_df (pd.DataFrame): Data to fit the transform to.
-        """
-        if self.include_categorical:
-            self._scaler.fit(data_df)
-        elif len(self.numerical_feature_list) > 0:
-            self._scaler.fit(data_df[self.numerical_feature_list])
-        else:
-            # Numerical transforms cannot work when there is no numerical features.
-            self._scaler = None
-
-    def _transform(
-        self,
-        data_df: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """Transforms the data.
-
-        Args:
-            data_df (pd.DataFrame): Data to transform.
-
-        Returns:
-            pd.DataFrame: Transformed data.
-        """
-        if self._scaler is None:
-            return data_df
-
-        if self.include_categorical:
-            data_df_transformed = self._scaler.transform(data_df)
-        else:
-            data_df_transformed = data_df.copy(deep=True)
-            data_df_transformed[self.numerical_feature_list] = self._scaler.transform(
-                data_df[self.numerical_feature_list]
-            )
-
-        return pd.DataFrame(data_df_transformed, columns=data_df.columns, index=data_df.index)
-
-    def _inverse_transform(
-        self,
-        data_df: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """Inverse transforms the data.
-
-        Args:
-            data_df (pd.DataFrame): Data to inverse transform.
-
-        Returns:
-            pd.DataFrame: Inverse transformed data.
-        """
-        if self._scaler is None:
-            return data_df
-
-        if self.include_categorical:
-            data_df_inverse_transformed = self._scaler.inverse_transform(data_df)
-        else:
-            data_df_inverse_transformed = data_df.copy(deep=True)
-            data_df_inverse_transformed[self.numerical_feature_list] = self._scaler.inverse_transform(
-                data_df[self.numerical_feature_list]
-            )
-
-        return pd.DataFrame(data_df_inverse_transformed, columns=data_df.columns, index=data_df.index)
-
-
-class StandardiseTransform(BaseTransform):
-
-    def __init__(
-        self,
-        copy: bool = True,
-        with_mean: bool = True,
-        with_std: bool = True,
-    ):
-        """Initialises the StandardiseTransform class.
-
-        Args:
-            The same as sklearn.preprocessing.StandardScaler.
-        """
-        super().__init__()
-        self._scaler = StandardScaler(copy=copy, with_mean=with_mean, with_std=with_std)
-
-    def _fit(
-        self,
-        data_df: pd.DataFrame,
-    ):
-        """Fits the transform to the data.
-
-        Args:
-            data_df (pd.DataFrame): Data to fit the transform to.
-        """
-        self._scaler.fit(data_df)
-
-    def _transform(
-        self,
-        data_df: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """Transforms the data.
-
-        Args:
-            data_df (pd.DataFrame): Data to transform.
-
-        Returns:
-            pd.DataFrame: Transformed data.
-        """
-        data_df_transformed = self._scaler.transform(data_df)
-        return pd.DataFrame(data_df_transformed, columns=data_df.columns, index=data_df.index)
-
-    def _inverse_transform(
-        self,
-        data_df: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """Inverse transforms the data.
-
-        Args:
-            data_df (pd.DataFrame): Data to inverse transform.
-
-        Returns:
-            pd.DataFrame: Inverse transformed data.
-        """
-        data_df_inverse_transformed = self._scaler.inverse_transform(data_df)
-        return pd.DataFrame(data_df_inverse_transformed, columns=data_df.columns, index=data_df.index)
-
-
 class SimpleImputeTransform(BaseTransform):
 
     def __init__(
@@ -419,6 +266,101 @@ class SimpleImputeTransform(BaseTransform):
         data_df_inverse_transformed = data_df.copy(deep=True)
 
         return data_df_inverse_transformed
+
+
+class NumericTransform(BaseTransform):
+
+    def __init__(
+        self,
+        numerical_feature_list: list,
+        strategy: str,
+        include_categorical: bool,
+        train_num_samples: int = None,
+    ):
+        """Initialises the NumericTransform class."""
+        super().__init__()
+
+        self.numerical_feature_list = numerical_feature_list
+        self.include_categorical = include_categorical
+        self.train_num_samples = train_num_samples
+
+        match strategy:
+            case "standard":
+                self._scaler = StandardScaler()
+            case "minmax":
+                self._scaler = MinMaxScaler()
+            case "quantile":
+                if train_num_samples is None:
+                    raise ValueError(f"train_num_samples must be provided for {strategy} strategy.")
+                # The settings are consistent with TabZilla: https://github.com/naszilla/tabzilla/blob/main/TabZilla/tabzilla_data_processing.py#L134
+                self._scaler = QuantileTransformer(n_quantiles=min(self.train_num_samples, 1000))
+
+    def _fit(
+        self,
+        data_df: pd.DataFrame,
+    ):
+        """Fits the transform to the data.
+
+        Args:
+            data_df (pd.DataFrame): Data to fit the transform to.
+        """
+        if self.include_categorical:
+            self._scaler.fit(data_df)
+        elif len(self.numerical_feature_list) > 0:
+            self._scaler.fit(data_df[self.numerical_feature_list])
+        else:
+            # Numerical transforms cannot work when there is no numerical features.
+            self._scaler = None
+
+    def _transform(
+        self,
+        data_df: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Transforms the data.
+
+        Args:
+            data_df (pd.DataFrame): Data to transform.
+
+        Returns:
+            pd.DataFrame: Transformed data.
+        """
+        if self._scaler is None:
+            return data_df
+
+        if self.include_categorical:
+            data_df_transformed = self._scaler.transform(data_df)
+        else:
+            data_df_transformed = data_df.copy(deep=True)
+            data_df_transformed[self.numerical_feature_list] = self._scaler.transform(
+                data_df[self.numerical_feature_list]
+            )
+
+        return pd.DataFrame(data_df_transformed, columns=data_df.columns, index=data_df.index)
+
+    def _inverse_transform(
+        self,
+        data_df: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Inverse transforms the data.
+
+        Args:
+            data_df (pd.DataFrame): Data to inverse transform.
+
+        Returns:
+            pd.DataFrame: Inverse transformed data.
+        """
+        if self._scaler is None:
+            return data_df
+
+        if self.include_categorical:
+            data_df_inverse_transformed = self._scaler.inverse_transform(data_df)
+        else:
+            data_df_inverse_transformed = data_df.copy(deep=True)
+            data_df_inverse_transformed[self.numerical_feature_list] = self._scaler.inverse_transform(
+                data_df[self.numerical_feature_list]
+            )
+
+        return pd.DataFrame(data_df_inverse_transformed, columns=data_df.columns, index=data_df.index)
 
 
 class CategoryTransform(BaseTransform):

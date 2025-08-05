@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python Debugger: Module",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "src.experiment.run_experiment",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "--pipeline",
+        "generation",
+        "--model",
+        "ctgan",
+        "--save_model",
+        "--dataset",
+        "adult",
+        "--test_size",
+        "0.2",
+        "--valid_size",
+        "0.1",
+        "--reg_test",
+        "--tags",
+        "dev"
+      ]
+    }
+  ]
+}

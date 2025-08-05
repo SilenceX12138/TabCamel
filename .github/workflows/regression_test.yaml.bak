@@ -1,0 +1,27 @@
+name: Regression Test
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "!src/analysis/**"
+      - "tutorials/installation/requirements_root.txt"
+      - "tutorials/installation/requirements.txt"
+
+jobs:
+  regression-test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Conda environment
+        run: |
+          eval "$(conda shell.bash hook)"
+          conda activate /home/xj265/anaconda3/envs/tfm
+
+      - name: Run tests
+        run: |
+          pytest tests/

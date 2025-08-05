@@ -10,15 +10,15 @@ class stype(Enum):
 
     """
 
-    numerical = "numerical"
-    categorical = "categorical"
-    text_embedded = "text_embedded"
-    text_tokenized = "text_tokenized"
-    multicategorical = "multicategorical"
+    numerical          = "numerical"
+    categorical        = "categorical"
+    text_embedded      = "text_embedded"
+    text_tokenized     = "text_tokenized"
+    multicategorical   = "multicategorical"
     sequence_numerical = "sequence_numerical"
-    timestamp = "timestamp"
-    image_embedded = "image_embedded"
-    embedding = "embedding"
+    timestamp          = "timestamp"
+    image_embedded     = "image_embedded"
+    embedding          = "embedding"
 
     @property
     def is_text_stype(self) -> bool:
@@ -80,12 +80,12 @@ class stype(Enum):
         return f"{self.name}"
 
 
-numerical = stype("numerical")
-categorical = stype("categorical")
-text_embedded = stype("text_embedded")
-text_tokenized = stype("text_tokenized")
-multicategorical = stype("multicategorical")
+numerical          = stype("numerical")
+categorical        = stype("categorical")
+text_embedded      = stype("text_embedded")
+text_tokenized     = stype("text_tokenized")
+multicategorical   = stype("multicategorical")
 sequence_numerical = stype("sequence_numerical")
-timestamp = stype("timestamp")
-image_embedded = stype("image_embedded")
-embedding = stype("embedding")
+timestamp          = stype("timestamp")
+image_embedded     = stype("image_embedded")
+embedding          = stype("embedding")

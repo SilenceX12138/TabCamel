@@ -29,6 +29,9 @@ dependencies = [
   "sphinx-rtd-theme",
   "sphinx-book-theme",
   "ipykernel",
+  "cloudpickle",
+  "bnlearn",
+  "ucimlrepo",
 ]
 
 [project.optional-dependencies]

@@ -6,7 +6,7 @@ A DataFrame-focused solution for tabular datasets in machine learning workflows.
 
 - **TabularDataset**: Comprehensive dataset class with sampling and splitting capabilities
 - **Data Transformations**: Scikit-learn compatible preprocessing transformations
-- **Multi-source Loading**: Support for local files, remote datasets, and popular ML repositories
+- **Multi-source Loading**: Support for local files and popular ML repositories
 - **AutoGluon Integration**: Seamless integration with AutoGluon for automated ML
 
 ## Installation
@@ -20,7 +20,7 @@ pip install tabcamel
 ```python
 from tabcamel.data.dataset import TabularDataset
 
-# Load a remote dataset (automatically downloaded)
+# Load a remote dataset
 dataset = TabularDataset('iris', task_type='classification')
 
 # Split into train/test sets
@@ -35,7 +35,7 @@ print(train_data)
 
 TabCamel supports multiple data sources:
 
-### Remote Datasets (Automatic Download)
+### Remote Datasets
 
 - **OpenML**: 30+ popular datasets (`'iris'`, `'adult'`, `'titanic'`, etc.)
 - **UCI ML Repository**: Classic datasets with proper metadata
@@ -60,41 +60,13 @@ dataset = TabularDataset('/path/to/your/data.csv', task_type='classification')
 import tabcamel.utils.config as config
 
 # Set up your data directory
-config.set_data_path('/your/data/directory')
-
-# Copy your datasets to the directory
-config.copy_example_data('/path/to/your/file.csv', 'my_dataset')
+local_dataset2path = {
+    "local_data": "/path/to/your/data.csv",
+}
+config.set_local_data_path(local_dataset2path)
 
 # Now use short names
-dataset = TabularDataset('my_dataset.csv', task_type='classification')
-```
-
-## Configuration
-
-### Setting Up Local Data Directory
-
-```python
-import tabcamel.utils.config as config
-
-# Set up your data directory
-config.setup_data_directory('/your/data/directory')
-TabCamel uses `~/.tabcamel/datasets/` as the default directory for local datasets. You can customize this:
-```
-
-```python
-import tabcamel.utils.config as config
-
-# View current configuration
-config.get_data_path()
-
-# Set custom data path for current session
-config.set_data_path('/your/custom/path')
-
-# Set up data directory (creates if missing)
-config.setup_data_directory('/your/custom/path')
-
-# View all available datasets
-config.list_available_datasets()
+dataset = TabularDataset('local_data', task_type='classification')
 ```
 
 ## Examples
@@ -111,7 +83,7 @@ dataset = TabularDataset('adult', task_type='classification')
 dataset = TabularDataset('/home/user/data/my_data.csv', task_type='regression')
 
 # Local dataset with configured data directory
-dataset = TabularDataset('my_data.csv', task_type='classification')
+dataset = TabularDataset('my_data', task_type='classification')
 ```
 
 ### Data Operations
@@ -130,14 +102,4 @@ test_set = split_result['test_set']
 print(f"Samples: {dataset.num_samples}")
 print(f"Features: {dataset.num_features}")
 print(f"Classes: {dataset.num_classes}")
-```
-
-## Development
-
-### Setting up Development Environment
-
-```bash
-git clone https://github.com/your-username/TabCamel.git
-cd TabCamel
-pip install -e .
 ```

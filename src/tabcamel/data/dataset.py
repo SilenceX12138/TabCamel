@@ -188,7 +188,7 @@ class TabularDataset:
             for categorical_col in self._categorical_feature_list:
                 nan_mask = data_df[categorical_col].isna()
                 data_df[categorical_col] = data_df[categorical_col].astype(str)
-                # pd.NA is not compatible with sklean transformations for data preprocessing
+                # pd.NA is not compatible with sklearn transformations for data preprocessing
                 data_df.loc[nan_mask, categorical_col] = np.nan
 
             # Before converting to tensor, the target column is always string for classification tasks
@@ -241,7 +241,7 @@ class TabularDataset:
         # === Check if sample size or indices are provided ===
         if sample_mode in ["random", "stratified", "uniform"]:
             if sample_size is None:
-                raise ValueError("Sample size must be provided for unfixed ampling.")
+                raise ValueError("Sample size must be provided for unfixed sampling.")
             if sample_indices is not None:
                 warnings.warn("Sample indices are provided but will be ignored.", UserWarning)
         if sample_mode in ["customised_ratio"]:
@@ -420,7 +420,7 @@ class TabularDataset:
         if split_mode in ["random", "stratified"]:
             X = self.data_df.drop(self._target_col, axis=1)
             y = self.data_df[self._target_col]
-            # IMPORTANT: stratify does not gurantee all classes are icluded in both train and test set
+            # IMPORTANT: stratify does not guarantee all classes are included in both train and test set
             X_train, X_test, y_train, y_test = train_test_split(
                 X,
                 y,

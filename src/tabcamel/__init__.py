@@ -161,15 +161,3 @@ dataset2path = {
     "healthcare__O"  : os.path.join(LOCAL_DATA_PATH, "structure/healthcare/healthcare.csv"),
     "MEHRA__blh"     : os.path.join(LOCAL_DATA_PATH, "structure/mehra/mehra.csv"),
 }
-
-dataset_with_dag = [
-    "cancer",
-    "insurance",
-    "hailfinder",
-    "ANDES",
-    "sangiovese",
-    "MAGIC-IRRI",
-    "ARTH150",
-    "healthcare",
-    "MEHRA",
-]

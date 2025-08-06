@@ -173,7 +173,7 @@ def load_bnlearn_dataset(dataset_name: str) -> dict:
     # bnlearn may return the features in different orders
     X_df = X_df[X_df.columns.sort_values()]
     # Use a dummy target variable
-    y_s = pd.Series(np.ones(X_df.shape[0]) * 12138)
+    y_s = pd.Series(np.ones(X_df.shape[0]) * DUMMY_TARGET)
 
     return {
         "id": dataset_id,

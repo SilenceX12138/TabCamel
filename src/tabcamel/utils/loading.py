@@ -111,7 +111,6 @@ def load_openml_dataset(dataset_name: str) -> dict:
 
 
 def load_uci_dataset(dataset_name: str) -> dict:
-
     # ===== Load the dataset with id=====
     dataset_id = dataset2uci_id[dataset_name]
     data_loaded = fetch_ucirepo(id=dataset_id)

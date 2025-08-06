@@ -69,7 +69,26 @@ class TabularDataset:
             the last column in the DataFrame will be automatically designated
             as the target column and renamed to 'target'.
         """
-        # ===== Sanity check for arguments =====
+        # === Sanity check for arguments ===
+        self._sanity_check(task_type, target_col)
+
+        # === Set the basic properties of the dataset ===
+        self._init_dataset_properties(dataset_name, task_type, target_col, metafeature_dict)
+
+        # === Load the dataset ===
+        self._init_data_df(data_df)
+
+        # === Analyse the metafeatures ===
+        # Metafeatures are those consistent after subsampling/splitting
+        self._metafeature_dict = self._parse_metafeatures()
+
+        # === Update the dataframe after parsing metafeatures ===
+        self._update_data_df()
+
+        # ===== Log the properties of the dataset =====
+        self._update_dataset_properties()
+
+    def _sanity_check(self, task_type: str, target_col: str | None) -> None:
         if task_type not in ["classification", "regression"]:
             raise ValueError(f"Task type {task_type} not recognised. Must be either 'classification' or 'regression'.")
         if target_col is None:
@@ -77,87 +96,59 @@ class TabularDataset:
                 "Target column not provided. The last column is considered as the target and will be renamed to 'target'.",
                 UserWarning,
             )
-        if metafeature_dict is None:
-            metafeature_dict = {}
 
-        # ===== Set the basic properties of the dataset =====
+    def _init_dataset_properties(
+        self, dataset_name: str, task_type: str, target_col: str | None, metafeature_dict: dict | None
+    ) -> None:
         self._dataset_name = dataset_name
         self._task_type = task_type
-        # Rename the target column to self._target_col
+
+        # Set self._target_col based on dataset_name or target_col
         if "__" in dataset_name:
             self._target_col = self._dataset_name.split("__")[-1]
         else:
-            self._target_col = "target" if target_col is None else target_col
+            self._target_col = target_col
 
-        # ===== Load the dataset =====
+        self._metafeature_dict = metafeature_dict
+        if self._metafeature_dict is None:
+            self._metafeature_dict = {}
+
+    def _init_data_df(self, data_df: pd.DataFrame | None) -> None:
+        """Initialize the data DataFrame by loading the dataset."""
         if data_df is None:
-            dataset = load_tabular_dataset(self._dataset_name, self._target_col, metafeature_dict)
+            dataset = load_tabular_dataset(self._dataset_name, self._target_col, self._metafeature_dict)
             data_source = dataset["data_source"]
             data_id = dataset["data_id"]
-            data_dict = dataset["data_dict"]
+
             # === Create a pandas DataFrame from the dataset ===
-            data_df = data_dict["X"]
-            data_df[self._target_col] = data_dict["y"]
+            data_dict = dataset["data_dict"]
+            data_df = pd.concat([data_dict["X"], data_dict["y"]], axis=1)
         else:
             data_source = "local"
             data_id = None
-            # === Rename the target column to self._target_col ===
-            original_target = target_col if target_col is not None else data_df.columns[-1]
-            data_df = data_df.rename(columns={original_target: self._target_col})
-            # === Ensure the target column is the last column ===
-            if self._target_col != data_df.columns[-1]:
-                column_list = list(data_df.columns)
-                column_list.remove(self._target_col)
-                column_list.append(self._target_col)
-                data_df = data_df[column_list]
         self._data_source = data_source
         self._data_id = data_id
+
+        # === Rename the target column to "target" ===
+        original_target = self._target_col if self._target_col is not None else data_df.columns[-1]
+        if original_target not in data_df.columns:
+            raise ValueError(f"Target column '{original_target}' not found in the dataset. Please check the dataset.")
+        self._target_col = "target"
+        data_df = data_df.rename(columns={original_target: self._target_col})
+
+        # === Ensure the target column is the last column ===
+        if self._target_col != data_df.columns[-1]:
+            column_list = list(data_df.columns)
+            column_list.remove(self._target_col)
+            column_list.append(self._target_col)
+            data_df = data_df[column_list]
         # All column names are strings
         data_df.columns = data_df.columns.astype(str)
 
-        # ===== Update the DataFrame =====
+        # === Update the DataFrame ===
         self._data_df = data_df
 
-        # ===== Analyse the metafeatures =====
-        # Metafeatures are those consistent after subsampling/splitting
-        self._metafeature_dict = self._parse_metafeatures(metafeature_dict)
-
-        # ===== Update the dataset properties after parsing metafeatures =====
-        data_df = self._data_df
-        # All categorical features have string values (except NaN)
-        for categorical_col in self._categorical_feature_list:
-            nan_mask = self.data_df[categorical_col].isna()
-            data_df[categorical_col] = self.data_df[categorical_col].astype(str)
-            # pd.NA is not compatible with sklean transformations for data preprocessing
-            data_df.loc[nan_mask, categorical_col] = np.nan
-        # Before converting to tensor, the target column is always string for classification tasks
-        if self._task_type == "classification" and not self._is_tensor:
-            data_df[self._target_col] = data_df[self._target_col].astype(str)
-        # Update the DataFrame again
-        self._data_df = data_df
-
-        # ===== Parse the structure information of the dataset =====
-        self._structure_info_dict = self._parse_structure_info()
-        self._dag_edges = self._structure_info_dict["dag_edges"]
-        self._dependency_dict = self._structure_info_dict["dependency_dict"]
-
-        # ===== Log the properties of the dataset =====
-        self._update_data_df_properties()
-
-    def _update_data_df_properties(self) -> None:
-        """Parse the properties of the dataset."""
-        self._num_samples = self.X_df.shape[0]
-        self._num_features = self.X_df.shape[1]
-        if self._task_type == "classification":
-            self._num_classes = len(self.data_df[self._target_col].unique())
-            self._class2samples = self.data_df[self._target_col].value_counts().to_dict()
-            self._class2distribution = self.data_df[self._target_col].value_counts(normalize=True).to_dict()
-        else:
-            self._num_classes = None
-            self._class2samples = None
-            self._class2distribution = None
-
-    def _parse_metafeatures(self, metafeature_dict: dict) -> dict:
+    def _parse_metafeatures(self) -> dict:
         """Parse the metafeatures of the dataset.
 
         Args:
@@ -166,15 +157,13 @@ class TabularDataset:
         Returns:
             dict: Dictionary containing the parsed full metafeatures.
         """
-        # ===== Parse the metafeatures =====
-        self._is_tensor = metafeature_dict.get("is_tensor", False)
-        self._col2type = metafeature_dict.get("col2type", self._infer_column_types())
-        self._data_source = metafeature_dict.get("source", self._data_source)
-        self._data_id = metafeature_dict.get("id", self._data_id)
-        # When building a dataset with give column names (e.g., from a DataFrame), the column names are consistent
-        self._data_df.columns = list(self._col2type.keys())
+        # Parse the metafeatures
+        self._is_tensor = self._metafeature_dict.get("is_tensor", False)
+        self._col2type = self._metafeature_dict.get("col2type", self._infer_column_types())
+        self._data_source = self._metafeature_dict.get("source", self._data_source)
+        self._data_id = self._metafeature_dict.get("id", self._data_id)
 
-        # Target is considered a column, not a feature
+        # Parse the directly derived attributes from metafeatures
         self._numerical_feature_list = [
             col for col, type in self.col2type.items() if (col != self._target_col and type == stype.numerical)
         ]
@@ -191,38 +180,40 @@ class TabularDataset:
             "id": self._data_id,
         }
 
-    def _parse_structure_info(self) -> pd.DataFrame:
-        """Parse the structure information of the dataset.
+    def _update_data_df(self) -> None:
+        data_df = self._data_df.copy(deep=True)
 
-        Returns:
-            pd.DataFrame: DataFrame containing the directed acyclic graph (DAG) edges.
-        """
-        # ===== Parse the structure information =====
-        dag_edges = None
-        dependency_dict = None
-        if "__" in self.dataset_name:
-            dataset_name = self.dataset_name.split("__")[0]
+        # When building a dataset with give column names (e.g., from a DataFrame), the column names are consistent
+        data_df.columns = list(self._col2type.keys())
+
+        if not self._is_tensor:
+            # All categorical features have string values (except NaN)
+            for categorical_col in self._categorical_feature_list:
+                nan_mask = data_df[categorical_col].isna()
+                data_df[categorical_col] = data_df[categorical_col].astype(str)
+                # pd.NA is not compatible with sklean transformations for data preprocessing
+                data_df.loc[nan_mask, categorical_col] = np.nan
+
+            # Before converting to tensor, the target column is always string for classification tasks
+            if self._task_type == "classification":
+                data_df[self._target_col] = data_df[self._target_col].astype(str)
+
+        # Update the DataFrame again
+        self._data_df = data_df
+
+    def _update_dataset_properties(self) -> None:
+        """Parse the properties of the dataset."""
+        # Target is considered a column, not a feature
+        self._num_samples = self.X_df.shape[0]
+        self._num_features = self.X_df.shape[1]
+        if self._task_type == "classification":
+            self._num_classes = len(self.data_df[self._target_col].unique())
+            self._class2samples = self.data_df[self._target_col].value_counts().to_dict()
+            self._class2distribution = self.data_df[self._target_col].value_counts(normalize=True).to_dict()
         else:
-            dataset_name = self.dataset_name
-
-        if dataset_name in dataset_with_dag:
-            # === Load the structure information of the dataset ===
-            dataset_name_lower = dataset_name.lower()
-            dag_edges = pd.read_csv(
-                os.path.join(LOCAL_DATA_PATH, "structure", dataset_name_lower, f"{dataset_name_lower}_edges.csv"),
-                dtype=str,
-            )
-            dependency_path = os.path.join(
-                LOCAL_DATA_PATH, "structure", dataset_name_lower, f"{dataset_name_lower}_dependency.pkl"
-            )
-            if os.path.exists(dependency_path):
-                with open(os.path.join(dependency_path), "rb") as f:
-                    dependency_dict = cloudpickle.load(f)
-
-        return {
-            "dag_edges": dag_edges,
-            "dependency_dict": dependency_dict,
-        }
+            self._num_classes = None
+            self._class2samples = None
+            self._class2distribution = None
 
     # ================================================================
     # =                                                              =
@@ -807,8 +798,9 @@ class TabularDataset:
         # ===== Update the DataFrame =====
         self._data_df = data_df
 
-        # ===== Analyses the DataFrame-specific properties =====
-        self._update_data_df_properties()
+        # ===== Update the DataFrame-specific properties =====
+        self._update_data_df()
+        self._update_dataset_properties()
 
     @property
     def is_tensor(self) -> bool:

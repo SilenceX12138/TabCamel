@@ -15,12 +15,18 @@ Key Features:
 Main Components:
     - :mod:`camel.data`: Core data handling classes and transformations
     - :mod:`camel.utils`: Utility functions for data loading and processing
+    - :mod:`camel.utils.config`: Configuration utilities for managing data paths
 
 Example:
     >>> from tabcamel.data.dataset import TabularDataset
     >>> dataset = TabularDataset('iris', task_type='classification')
     >>> train_test = dataset.split('stratified', train_size=0.8)
     >>> train_data = train_test['train_set']
+
+Configuration:
+    >>> import tabcamel.utils.config as config
+    >>> config.set_data_path('/your/data/directory')  # Set custom data path
+    >>> config.list_available_datasets()             # View all datasets
 """
 
 import os
@@ -48,7 +54,10 @@ warnings.formatwarning = color_formatwarning
 # =                                                              =
 # ================================================================
 DUMMY_TARGET = 12138
-LOCAL_DATA_PATH = "/home/xj265/phd/codebase/Camel/dataset/"
+
+# Default data path - can be overridden by environment variable
+DEFAULT_DATA_PATH = os.path.join(os.path.expanduser("~"), ".tabcamel", "datasets")
+LOCAL_DATA_PATH = os.environ.get("TABCAMEL_DATA_PATH", DEFAULT_DATA_PATH)
 
 dataset2openml_id = {
     # Classification

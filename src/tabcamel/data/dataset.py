@@ -750,24 +750,6 @@ class TabularDataset:
         """
         return self._categorical_feature_list
 
-    @property
-    def dag_edges(self) -> pd.DataFrame:
-        """Return the DataFrame containing the directed acyclic graph (DAG) edges.
-
-        Returns:
-            pd.DataFrame: DataFrame containing the directed acyclic graph (DAG) edges.
-        """
-        return self._dag_edges
-
-    @property
-    def dependency_dict(self) -> dict:
-        """Return the dictionary containing the dependencies.
-
-        Returns:
-            dict: Dictionary containing the dependencies.
-        """
-        return self._dependency_dict
-
     # ===================== Read-write properties =====================
     @property
     def data_df(self) -> pd.DataFrame:

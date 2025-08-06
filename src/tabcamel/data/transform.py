@@ -187,7 +187,18 @@ class SimpleImputeTransform(BaseTransform):
         add_indicator=False,
         keep_empty_features=False,
     ):
-
+        """Initialises the SimpleImputeTransform class.
+        Args:
+            categorical_feature_list (list): List of categorical feature names.
+            numerical_feature_list (list): List of numerical feature names.
+            strategy_categorical (str): Strategy for imputing categorical features.
+            strategy_numerical (str): Strategy for imputing numerical features.
+            missing_values: The placeholder for the missing values.
+            fill_value: The value to replace missing values with.
+            copy (bool): Whether to copy the data before transforming.
+            add_indicator (bool): Whether to add an indicator for missing values.
+            keep_empty_features (bool): Whether to keep empty features in the output.
+        """
         super().__init__()
 
         # === Basic configurations ===
@@ -256,6 +267,7 @@ class SimpleImputeTransform(BaseTransform):
         data_df: pd.DataFrame,
     ) -> pd.DataFrame:
         """Inverse transforms the data.
+        Note that we simply return the original data as "add_indicator" is not fully supported yet.
 
         Args:
             data_df (pd.DataFrame): Data to inverse transform.
@@ -389,12 +401,19 @@ class CategoryTransform(BaseTransform):
         self,
         data_df: pd.DataFrame,
     ):
-        self._encoder.fit(data_df[self.categorical_feature_list])
+        if len(self.categorical_feature_list) > 0:
+            self._encoder.fit(data_df[self.categorical_feature_list])
+        else:
+            # Categorical transforms cannot work when there is no categorical features.
+            self._encoder = None
 
     def _transform(
         self,
         data_df: pd.DataFrame,
     ) -> pd.DataFrame:
+        if self._encoder is None:
+            return data_df
+
         cat_df_transformed = self._encoder.transform(data_df[self.categorical_feature_list])
         cat_df_transformed = pd.DataFrame(
             cat_df_transformed,
@@ -411,8 +430,8 @@ class CategoryTransform(BaseTransform):
         self,
         data_df: pd.DataFrame,
     ) -> pd.DataFrame:
-        categorical_feature_list_encoded = self._encoder.get_feature_names_out(self.categorical_feature_list)
-        if len(categorical_feature_list_encoded) == 0:
+        if self._encoder is None:
+            # If the encoder does not exist, return the original data.
             return data_df
 
         """One-hot encoder can inverse transform non-one-hot encoded data.
@@ -426,7 +445,7 @@ class CategoryTransform(BaseTransform):
         print(
             enc.inverse_transform(
                 [
-                    [0, 1, 1, 0, 0],  # Male, 1
+                    [0, 1, 1, 0, 0],  # Male, 1 -> One-hot transform would sort the categories
                     [0, 0, 0, 1, 0],  # None, 2
                     [0, 0, 0, 0, 0],  # None, None
                     [0.3, 0.7, 0.2, 0.7, 0.1],  # Male, 2
@@ -437,6 +456,7 @@ class CategoryTransform(BaseTransform):
         )
         print(enc.get_feature_names_out(["gender", "group"]))
         """
+        categorical_feature_list_encoded = self._encoder.get_feature_names_out(self.categorical_feature_list)
         cat_df = data_df[categorical_feature_list_encoded]
         cat_df_inverse_transformed = self._encoder.inverse_transform(cat_df)
         cat_df_inverse_transformed = pd.DataFrame(

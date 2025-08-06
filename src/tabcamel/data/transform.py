@@ -183,7 +183,7 @@ class SimpleImputeTransform(BaseTransform):
         strategy_numerical: str,
         missing_values=pd.NA,
         fill_value=None,
-        copy=True,
+        copy=False,
         add_indicator=False,
         keep_empty_features=False,
     ):
@@ -196,6 +196,7 @@ class SimpleImputeTransform(BaseTransform):
             missing_values: The placeholder for the missing values.
             fill_value: The value to replace missing values with.
             copy (bool): Whether to copy the data before transforming.
+            As we have done deepcopy in BaseTransform, this is set to False by default to avoid unnecessary copies.
             add_indicator (bool): Whether to add an indicator for missing values.
             keep_empty_features (bool): Whether to keep empty features in the output.
         """
@@ -206,7 +207,7 @@ class SimpleImputeTransform(BaseTransform):
         self.numerical_feature_list = numerical_feature_list
 
         # === Set the imputers for categorical and numerical features ===
-        self._imputer_categotical = SimpleImputer(
+        self._imputer_categorical = SimpleImputer(
             missing_values=missing_values,
             strategy=strategy_categorical,
             fill_value=fill_value,
@@ -233,7 +234,7 @@ class SimpleImputeTransform(BaseTransform):
             data_df (pd.DataFrame): Data to fit the transform to.
         """
         if self.categorical_feature_list:
-            self._imputer_categotical.fit(data_df[self.categorical_feature_list])
+            self._imputer_categorical.fit(data_df[self.categorical_feature_list])
         if self.numerical_feature_list:
             self._imputer_numerical.fit(data_df[self.numerical_feature_list])
 
@@ -249,10 +250,10 @@ class SimpleImputeTransform(BaseTransform):
         Returns:
             pd.DataFrame: Transformed data.
         """
-        data_df_transformed = data_df.copy(deep=True)
+        data_df_transformed = data_df
 
         if self.categorical_feature_list:
-            data_df_transformed[self.categorical_feature_list] = self._imputer_categotical.transform(
+            data_df_transformed[self.categorical_feature_list] = self._imputer_categorical.transform(
                 data_df[self.categorical_feature_list]
             )
         if self.numerical_feature_list:
@@ -275,7 +276,7 @@ class SimpleImputeTransform(BaseTransform):
         Returns:
             pd.DataFrame: Inverse transformed data.
         """
-        data_df_inverse_transformed = data_df.copy(deep=True)
+        data_df_inverse_transformed = data_df
 
         return data_df_inverse_transformed
 
@@ -342,7 +343,7 @@ class NumericTransform(BaseTransform):
         if self.include_categorical:
             data_df_transformed = self._scaler.transform(data_df)
         else:
-            data_df_transformed = data_df.copy(deep=True)
+            data_df_transformed = data_df
             data_df_transformed[self.numerical_feature_list] = self._scaler.transform(
                 data_df[self.numerical_feature_list]
             )
@@ -367,7 +368,7 @@ class NumericTransform(BaseTransform):
         if self.include_categorical:
             data_df_inverse_transformed = self._scaler.inverse_transform(data_df)
         else:
-            data_df_inverse_transformed = data_df.copy(deep=True)
+            data_df_inverse_transformed = data_df
             data_df_inverse_transformed[self.numerical_feature_list] = self._scaler.inverse_transform(
                 data_df[self.numerical_feature_list]
             )
@@ -465,7 +466,7 @@ class CategoryTransform(BaseTransform):
             index=data_df.index,
         )
 
-        data_df_inverse_transformed = data_df.copy(deep=True)
+        data_df_inverse_transformed = data_df
         data_df_inverse_transformed = data_df_inverse_transformed.drop(categorical_feature_list_encoded, axis=1)
         data_df_inverse_transformed = pd.concat([data_df_inverse_transformed, cat_df_inverse_transformed], axis=1)
 
@@ -482,7 +483,7 @@ class TargetTransform(BaseTransform):
         self,
         task: str,
         target_feature: str,
-        copy: bool = True,
+        copy: bool = False,
         with_mean: bool = True,
         with_std: bool = True,
     ):
@@ -504,16 +505,14 @@ class TargetTransform(BaseTransform):
         self,
         data_df: pd.DataFrame,
     ):
-        self._encoder.fit(data_df[[self.target_feature]].values.reshape(-1, 1))
+        self._encoder.fit(data_df[[self.target_feature]])
 
     def _transform(
         self,
         data_df: pd.DataFrame,
     ) -> pd.DataFrame:
-        data_df_transformed = data_df.copy(deep=True)
-        data_df_transformed[self.target_feature] = self._encoder.transform(
-            data_df[[self.target_feature]].values.reshape(-1, 1)
-        )
+        data_df_transformed = data_df
+        data_df_transformed[self.target_feature] = self._encoder.transform(data_df[[self.target_feature]])
 
         return data_df_transformed
 
@@ -521,9 +520,9 @@ class TargetTransform(BaseTransform):
         self,
         data_df: pd.DataFrame,
     ) -> pd.DataFrame:
-        data_df_inverse_transformed = data_df.copy(deep=True)
+        data_df_inverse_transformed = data_df
         data_df_inverse_transformed[self.target_feature] = self._encoder.inverse_transform(
-            data_df[[self.target_feature]].values.reshape(-1, 1)
+            data_df[[self.target_feature]]
         )
 
         return data_df_inverse_transformed

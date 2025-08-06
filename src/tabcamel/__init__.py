@@ -55,10 +55,6 @@ warnings.formatwarning = color_formatwarning
 # ================================================================
 DUMMY_TARGET = 12138
 
-# Default data path - can be overridden by environment variable
-DEFAULT_DATA_PATH = os.path.join(os.path.expanduser("~"), ".tabcamel", "datasets")
-LOCAL_DATA_PATH = os.environ.get("TABCAMEL_DATA_PATH", DEFAULT_DATA_PATH)
-
 dataset2openml_id = {
     # Classification
     "qsar-biodeg"               : 1494,
@@ -144,20 +140,5 @@ dataset2pgmpy_id = {
     "link"       : "link",
 }
 
-dataset2path = {
-    # === Normal ===
-    # Classification
-    "lung": os.path.join(LOCAL_DATA_PATH, "lung/lung.mat"),
-    # === Structure Learning (dataset__label) ===
-    # Classification
-    "cancer__Cancer"       : os.path.join(LOCAL_DATA_PATH, "structure/cancer/cancer.csv"),
-    "insurance__PropCost"  : os.path.join(LOCAL_DATA_PATH, "structure/insurance/insurance.csv"),
-    "hailfinder__R5Fcst"   : os.path.join(LOCAL_DATA_PATH, "structure/hailfinder/hailfinder.csv"),
-    "ANDES__GOAL_147"      : os.path.join(LOCAL_DATA_PATH, "structure/andes/andes.csv"),
-    "sangiovese__Treatment": os.path.join(LOCAL_DATA_PATH, "structure/sangiovese/sangiovese.csv"),
-    # Regression
-    "MAGIC-IRRI__YLD": os.path.join(LOCAL_DATA_PATH, "structure/magic-irri/magic-irri.csv"),
-    "ARTH150__570"   : os.path.join(LOCAL_DATA_PATH, "structure/arth150/arth150.csv"),
-    "healthcare__O"  : os.path.join(LOCAL_DATA_PATH, "structure/healthcare/healthcare.csv"),
-    "MEHRA__blh"     : os.path.join(LOCAL_DATA_PATH, "structure/mehra/mehra.csv"),
-}
+# Paths to local datasets
+dataset2path = {}

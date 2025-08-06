@@ -6,36 +6,20 @@ This module provides utilities for managing TabCamel configuration,
 particularly for setting up and managing local dataset paths.
 """
 
-from .. import LOCAL_DATA_PATH
 
-
-def get_data_path() -> str:
-    """Get the current data path for local datasets.
-
-    Returns:
-        str: The current local data path.
-    """
-    return LOCAL_DATA_PATH
-
-
-def set_data_path(path: str) -> None:
-    """Set the data path for local datasets.
-
-    This function sets the TABCAMEL_DATA_PATH environment variable
-    for the current session. To make it permanent, users should set
-    this environment variable in their shell configuration.
+def set_local_data_path(local_dataset2path: dict) -> None:
+    """Set the local dataset path for TabCamel.
 
     Args:
-        path (str): The new path for local datasets.
-
-    Note:
-        This only affects the current Python session. To make the change
-        permanent, set the TABCAMEL_DATA_PATH environment variable in your
-        shell configuration (.bashrc, .zshrc, etc.).
+        local_dataset2path (str): Path to the directory containing local datasets.
     """
-    # Update the module-level variable
-    global LOCAL_DATA_PATH
-    LOCAL_DATA_PATH = path
+    from .. import dataset2path
+
+    if not isinstance(local_dataset2path, dict):
+        raise ValueError("local_dataset2path must be a dictionary mapping dataset names to file paths.")
+
+    # Update the dataset2path with the provided local dataset paths
+    dataset2path.update(local_dataset2path)
 
 
 def get_dataset_info() -> dict:
@@ -79,7 +63,6 @@ def get_dataset_info() -> dict:
             "count": len(dataset2path),
             "description": "Predefined local datasets (require data files)",
             "examples": list(dataset2path.keys())[:5],
-            "data_path": get_data_path(),
         },
         "usage_info": {
             "remote": "Use dataset name directly: TabularDataset('iris', task_type='classification')",
@@ -95,8 +78,6 @@ def list_available_datasets() -> None:
 
     print("TabCamel Available Datasets")
     print("=" * 50)
-    print(f"Local data path: {info['local_datasets']['data_path']}")
-    print()
 
     # Remote datasets
     print("Remote Datasets (automatically downloaded):")

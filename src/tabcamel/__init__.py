@@ -17,7 +17,7 @@ Main Components:
     - :mod:`camel.utils`: Utility functions for data loading and processing
 
 Example:
-    >>> from camel.data.dataset import TabularDataset
+    >>> from tabcamel.data.dataset import TabularDataset
     >>> dataset = TabularDataset('iris', task_type='classification')
     >>> train_test = dataset.split('stratified', train_size=0.8)
     >>> train_data = train_test['train_set']

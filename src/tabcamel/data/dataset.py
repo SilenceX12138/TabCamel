@@ -28,7 +28,7 @@ class TabularDataset:
     detection and extensive metadata parsing capabilities.
 
     Example:
-        >>> from camel.data.dataset import TabularDataset
+        >>> from tabcamel.data.dataset import TabularDataset
         >>> dataset = TabularDataset(
         ...     dataset_name='iris',
         ...     task_type='classification',
@@ -68,15 +68,6 @@ class TabularDataset:
             If target_col is not provided and no target column is explicitly set,
             the last column in the DataFrame will be automatically designated
             as the target column and renamed to 'target'.
-        """
-        """Initialise the TabularDataset.
-
-        Args:
-            dataset_name (str): Name of the dataset.
-            task_type (str): Type of task (classification or regression).
-            target_col (Optional[str], optional): Name of the target column. Defaults to None.
-            metafeature_dict (Optional[dict], optional): Dictionary containing the metafeatures. Defaults to None.
-            data_df (Optional[pd.DataFrame], optional): DataFrame containing the features and target. Defaults to None.
         """
         # ===== Sanity check for arguments =====
         if task_type not in ["classification", "regression"]:

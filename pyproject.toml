@@ -32,6 +32,7 @@ dependencies = [
   "cloudpickle",
   "bnlearn",
   "ucimlrepo",
+  "pgmpy==1.0.0",
 ]
 
 [project.optional-dependencies]

@@ -299,7 +299,10 @@ class TabularDataset:
             # When random_state is set, larger sample_size will be superset of smaller sample size
             data_df = self.data_df.groupby(self._target_col, observed=True, group_keys=False).apply(
                 lambda x: x.sample(
-                    n=class2num_samples[x[self._target_col].iloc[0]], random_state=random_state, replace=True
+                    n=class2num_samples[x[self._target_col].iloc[0]],
+                    random_state=random_state,
+                    # Allow replacement if sample size is larger than the dataset size
+                    replace=sample_size > self._num_samples,
                 )
             )
         # ===== Uniform sampling =====

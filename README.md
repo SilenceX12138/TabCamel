@@ -8,20 +8,20 @@
 
 A DataFrame-focused solution for tabular datasets in machine learning workflows.
 
-## Features
+## 🎯 Features
 
 - **TabularDataset**: Comprehensive dataset class with sampling and splitting capabilities
 - **Data Transformations**: Scikit-learn compatible preprocessing transformations
 - **Multi-source Loading**: Support for local files and popular ML repositories
 - **AutoGluon Integration**: Seamless integration with AutoGluon for automated ML
 
-## Installation
+## 🛠 Installation
 
 ```bash
 pip install tabcamel
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 ```python
 from tabcamel.data.dataset import TabularDataset
@@ -37,7 +37,7 @@ test_data = train_test['test_set']
 print(train_data)
 ```
 
-## Dataset Sources
+## 💽 Dataset Sources
 
 TabCamel supports multiple data sources:
 
@@ -75,7 +75,7 @@ config.set_local_data_path(local_dataset2path)
 dataset = TabularDataset('local_data', task_type='classification')
 ```
 
-## Examples
+## 💻 Examples
 
 ### Basic Usage
 
@@ -108,4 +108,18 @@ test_set = split_result['test_set']
 print(f"Samples: {dataset.num_samples}")
 print(f"Features: {dataset.num_features}")
 print(f"Classes: {dataset.num_classes}")
+```
+
+
+## 📚 Citation
+
+If you use TabEval in your research, please cite:
+
+```bibtex
+@misc{tabeval,
+  title = {TabEval: A Comprehensive Evaluation Framework for Tabular Synthetic Data Generation},
+  author = {Xiangjian Jiang},
+  year = {2025},
+  howpublished = {\url{https://github.com/SilenceX12138/TabEval}},
+}
 ```

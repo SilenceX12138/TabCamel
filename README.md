@@ -1,5 +1,9 @@
 # TabCamel
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Downloads](https://static.pepy.tech/badge/tabcamel)](https://pypi.org/project/tabcamel/)
+
 A DataFrame-focused solution for tabular datasets in machine learning workflows.
 
 ## Features

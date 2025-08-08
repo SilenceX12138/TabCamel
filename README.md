@@ -113,13 +113,13 @@ print(f"Classes: {dataset.num_classes}")
 
 ## 📚 Citation
 
-If you use TabEval in your research, please cite:
+If you use TabCamel in your research, please cite:
 
 ```bibtex
-@misc{tabeval,
-  title = {TabEval: A Comprehensive Evaluation Framework for Tabular Synthetic Data Generation},
+@misc{tabcamel,
+  title = {TabCamel: A DataFrame-focused solution for tabular datasets in machine learning workflows},
   author = {Xiangjian Jiang},
   year = {2025},
-  howpublished = {\url{https://github.com/SilenceX12138/TabEval}},
+  howpublished = {\url{https://github.com/SilenceX12138/TabCamel}},
 }
 ```

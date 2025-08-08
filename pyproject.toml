@@ -11,13 +11,13 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
 ]
-description = "A Python project framework for managing dual-repository workflows with automated release management and development tools"
-keywords = ["framework", "template", "repository", "automation", "development"]
+description = "TabCamel: A DataFrame-focused solution for tabular datasets in machine learning workflows"
+keywords = ["tabular data", "dataframe", "machine learning"]
 license = {file = "LICENSE"}
 name = "tabcamel"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "2025.07.23"
+version = "2025.08.08"
 
 dependencies = [
   "pytest",
@@ -29,6 +29,10 @@ dependencies = [
   "sphinx-rtd-theme",
   "sphinx-book-theme",
   "ipykernel",
+  "cloudpickle",
+  "bnlearn",
+  "ucimlrepo",
+  "pgmpy==1.0.0",
 ]
 
 [project.optional-dependencies]

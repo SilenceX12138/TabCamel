@@ -10,14 +10,14 @@ help:
 	@echo "  docs-serve        	Build and deploy documentation"
 	@echo "  docs-build			Build the documentation"
 	@echo "  docs-clean  		Clean documentation build"
-	@echo "  init    		init the project environment"
+	@echo "  init    			Init the project environment"
 	@echo "  release      		Release the package with squashed commits"
 	@echo "  clear-branch 		Clean deprecated git branches"
 	@echo "  launch-server      Launch the local workflow server"
 
 # Build and clean when src is not empty
 build: clean
-	if [ -z "$(ls -A src 2>/dev/null)" ]; then \
+	if [ -z "$$(ls -A src 2>/dev/null)" ]; then \
 		echo "No source files found in 'src' directory. Skipping build."; \
 	else \
 		echo "Building the package..."; \
@@ -29,7 +29,7 @@ clean:
 
 # Installation
 install:
-	if [ -z "$(ls -A src 2>/dev/null)" ]; then \
+	if [ -z "$$(ls -A src 2>/dev/null)" ]; then \
 		uv pip install -r pyproject.toml; \
 	else \
 		make build; \

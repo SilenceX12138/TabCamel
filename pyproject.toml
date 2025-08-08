@@ -17,7 +17,7 @@ license = {file = "LICENSE"}
 name = "tabcamel"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "2025.07.23"
+version = "2025.08.05"
 
 dependencies = [
   "pytest",
@@ -29,6 +29,10 @@ dependencies = [
   "sphinx-rtd-theme",
   "sphinx-book-theme",
   "ipykernel",
+  "cloudpickle",
+  "bnlearn",
+  "ucimlrepo",
+  "pgmpy==1.0.0",
 ]
 
 [project.optional-dependencies]

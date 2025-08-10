@@ -402,6 +402,7 @@ class CategoryTransform(BaseTransform):
         self,
         data_df: pd.DataFrame,
     ):
+        self._original_column_list = data_df.columns.tolist()
         if len(self.categorical_feature_list) > 0:
             self._encoder.fit(data_df[self.categorical_feature_list])
         else:
@@ -469,6 +470,7 @@ class CategoryTransform(BaseTransform):
         data_df_inverse_transformed = data_df
         data_df_inverse_transformed = data_df_inverse_transformed.drop(categorical_feature_list_encoded, axis=1)
         data_df_inverse_transformed = pd.concat([data_df_inverse_transformed, cat_df_inverse_transformed], axis=1)
+        data_df_inverse_transformed = data_df_inverse_transformed[self._original_column_list]
 
         return data_df_inverse_transformed
 

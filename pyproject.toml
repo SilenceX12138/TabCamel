@@ -17,7 +17,7 @@ license = {file = "LICENSE"}
 name = "tabcamel"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "2025.08.08"
+version = "2025.08.10"
 
 dependencies = [
   "pytest",

@@ -29,7 +29,6 @@ Configuration:
     >>> config.list_available_datasets()             # View all datasets
 """
 
-import os
 import warnings
 
 
@@ -57,33 +56,36 @@ DUMMY_TARGET = 12138
 
 dataset2openml_id = {
     # Classification
-    "qsar-biodeg"               : 1494,
-    "vehicle"                   : 54,
-    "texture"                   : 40499,
-    "steel-plates-fault"        : 1504,
-    "MiceProtein"               : 40966,
-    "mfeat-fourier"             : 14,
-    "adult"                     : 179,
-    "one-hundred-plants-texture": 1493,
-    "energy-efficiency"         : 1472,
-    "collins"                   : 40971,
-    "soybean"                   : 42,
-    "wilt"                      : 40983,
-    "autoUniv-au6-1000"         : 1555,
-    "vowel"                     : 307,
-    "stock"                     : 841,
-    "iris"                      : 61,
-    "electricity"               : 151,
-    "higgs"                     : 4532,
-    "splice"                    : 46,
-    "SpeedDating"               : 40536,
-    "ada-agnostic"              : 1043,
-    "artificial-characters"     : 1459,
-    "jasmine"                   : 41143,
-    "phoneme"                   : 1489,
-    "credit-g"                  : 46378,
-    "nomao"                     : 45078,
-    "mfeat-zernike"             : 22,
+    "qsar-biodeg"                          : 46952,
+    "vehicle"                              : 54,
+    "texture"                              : 40499,
+    "steel-plates-fault"                   : 1504,
+    "MiceProtein"                          : 40966,
+    "mfeat-fourier"                        : 14,
+    "adult"                                : 179,
+    "one-hundred-plants-texture"           : 1493,
+    "energy-efficiency"                    : 1472,
+    "collins"                              : 40971,
+    "soybean"                              : 42,
+    "wilt"                                 : 40983,
+    "autoUniv-au6-1000"                    : 1555,
+    "vowel"                                : 307,
+    "stock"                                : 841,
+    "iris"                                 : 61,
+    "electricity"                          : 151,
+    "higgs"                                : 4532,
+    "splice"                               : 46,
+    "SpeedDating"                          : 40536,
+    "ada-agnostic"                         : 1043,
+    "artificial-characters"                : 1459,
+    "jasmine"                              : 41143,
+    "phoneme"                              : 1489,
+    "credit-g"                             : 46918,
+    "nomao"                                : 45078,
+    "mfeat-zernike"                        : 22,
+    "students_dropout_and_academic_success": 46960,
+    "polish_companies_bankruptcy"          : 46950,
+    "GiveMeSomeCredit"                     : 46929,
     # Regression
     "liver-disorders"                : 8,
     "california_housing"             : 43939,
@@ -95,6 +97,8 @@ dataset2openml_id = {
     "california_housing"             : 43939,
     "house_16H"                      : 574,
     "house_sales"                    : 42092,
+    "wine_quality"                   : 46964,
+    "superconductivity"              : 46961,
 }
 
 dataset2uci_id = {
@@ -106,6 +110,7 @@ dataset2uci_id = {
     "auction_verification"                         : 713,
     "abalone"                                      : 1,
     "statlog_german_credit_data"                   : 144,
+    "breast_cancer_wisconsin_diagnostic"           : 17,
     # Regression
     "Superconductivty": 464,
     "Wine Quality"    : 186,

@@ -156,17 +156,29 @@ class TabularDataset:
         """
         # Parse the metafeatures
         self._is_tensor = self._metafeature_dict.get("is_tensor", False)
-        self._col2type = self._metafeature_dict.get("col2type", self._infer_column_types())
         self._data_source = self._metafeature_dict.get("source", self._data_source)
         self._data_id = self._metafeature_dict.get("id", self._data_id)
 
+        # Only infer column types if not provided to avoid expensive computation
+        # dict.get will compute default value before check the key availability
+        if "col2type" in self._metafeature_dict:
+            self._col2type = self._metafeature_dict["col2type"]
+        else:
+            self._col2type = self._infer_column_types()
+
         # Parse the directly derived attributes from metafeatures
-        self._numerical_feature_list = [
-            col for col, type in self.col2type.items() if (col != self._target_col and type == stype.numerical)
-        ]
-        self._categorical_feature_list = [
-            col for col, type in self.col2type.items() if (col != self._target_col and type == stype.categorical)
-        ]
+        if "numerical_feature_list" in self._metafeature_dict:
+            self._numerical_feature_list = self._metafeature_dict["numerical_feature_list"]
+        else:
+            self._numerical_feature_list = [
+                col for col, type in self._col2type.items() if (col != self._target_col and type == stype.numerical)
+            ]
+        if "categorical_feature_list" in self._metafeature_dict:
+            self._categorical_feature_list = self._metafeature_dict["categorical_feature_list"]
+        else:
+            self._categorical_feature_list = [
+                col for col, type in self._col2type.items() if (col != self._target_col and type == stype.categorical)
+            ]
         self._num_numerical_features = len(self._numerical_feature_list)
         self._num_categorical_features = len(self._categorical_feature_list)
 
@@ -175,6 +187,8 @@ class TabularDataset:
             "col2type": self._col2type,
             "source": self._data_source,
             "id": self._data_id,
+            "numerical_feature_list": self._numerical_feature_list,
+            "categorical_feature_list": self._categorical_feature_list,
         }
 
     def _update_data_df(self) -> None:
@@ -491,7 +505,9 @@ class TabularDataset:
         col2type = {}
         for col in self.X_df.columns:
             # ptypes.is_numeric_dtype treats boolean as numerical, which is not desired
-            if ptypes.is_numeric_dtype(self.X_df[col]) and ptypes.infer_dtype(self.X_df[col]) != "boolean":
+            if self.is_tensor or (
+                ptypes.is_numeric_dtype(self.X_df[col]) and ptypes.infer_dtype(self.X_df[col]) != "boolean"
+            ):
                 col2type[col] = stype.numerical
             else:
                 col2type[col] = stype.categorical

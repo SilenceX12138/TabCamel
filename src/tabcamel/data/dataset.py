@@ -505,7 +505,9 @@ class TabularDataset:
         col2type = {}
         for col in self.X_df.columns:
             # ptypes.is_numeric_dtype treats boolean as numerical, which is not desired
-            if ptypes.is_numeric_dtype(self.X_df[col]) and ptypes.infer_dtype(self.X_df[col]) != "boolean":
+            if self.is_tensor or (
+                ptypes.is_numeric_dtype(self.X_df[col]) and ptypes.infer_dtype(self.X_df[col]) != "boolean"
+            ):
                 col2type[col] = stype.numerical
             else:
                 col2type[col] = stype.categorical

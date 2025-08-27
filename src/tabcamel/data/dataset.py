@@ -297,7 +297,7 @@ class TabularDataset:
                 f"Number of samples ({sample_size}) is less than the number of classes ({self._num_classes}) when using stratified subsampling."
             )
         # === Check if the sampling mode is compatible with the task ===
-        if self._task_type == "unsupervision" and sample_mode != "random":
+        if self._task_type == "unsupervision" and sample_mode not in ["fixed", "random", "uniform"]:
             raise ValueError(f"Sampling mode '{sample_mode}' is not allowed for unsupervised tasks.")
 
         # ===== Random sampling =====

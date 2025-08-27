@@ -12,8 +12,7 @@ from sklearn import datasets
 from sklearn.datasets import fetch_openml
 from ucimlrepo import fetch_ucirepo
 
-from .. import (DUMMY_TARGET, dataset2bnlearn_id, dataset2openml_id, dataset2path, dataset2pgmpy_id, dataset2sklearn_id,
-                dataset2uci_id)
+from .. import dataset2bnlearn_id, dataset2openml_id, dataset2path, dataset2pgmpy_id, dataset2sklearn_id, dataset2uci_id
 
 
 def load_tabular_dataset(
@@ -43,9 +42,9 @@ def load_tabular_dataset(
     elif dataset_source == "sklearn":
         dataset = load_sklearn_dataset(dataset_name)
     elif dataset_source == "bnlearn":
-        dataset = load_bnlearn_dataset(dataset_name)
+        dataset = load_bnlearn_dataset(dataset_name, target_col)
     elif dataset_source == "pgmpy":
-        dataset = load_pgmpy_dataset(dataset_name)
+        dataset = load_pgmpy_dataset(dataset_name, target_col)
     elif dataset_source == "local":
         dataset = load_local_dataset(dataset_name, target_col, metafeature_dict)
     else:
@@ -154,7 +153,10 @@ def load_sklearn_dataset(dataset_name: str) -> dict:
     }
 
 
-def load_bnlearn_dataset(dataset_name: str) -> dict:
+def load_bnlearn_dataset(
+    dataset_name: str,
+    target_col: Optional[str] = None,
+) -> dict:
     """Load a dataset from bnlearn. (default to regression task)
 
     Args:
@@ -166,13 +168,13 @@ def load_bnlearn_dataset(dataset_name: str) -> dict:
     # ===== Load the dataset with id=====
     dataset_id = dataset2bnlearn_id[dataset_name]
     data_loaded = bn.import_example(data=dataset_id, n=10000)
+    data_loaded = data_loaded[data_loaded.columns.sort_values()]
 
     # ===== Get the features and target variables =====
-    X_df = data_loaded
-    # bnlearn may return the features in different orders
-    X_df = X_df[X_df.columns.sort_values()]
-    # Use a dummy target variable
-    y_s = pd.Series(np.ones(X_df.shape[0]) * DUMMY_TARGET)
+    # Use the last column as target unless specified
+    target_col = target_col if target_col in data_loaded.columns else data_loaded.columns[-1]
+    X_df = data_loaded.drop(target_col, axis=1)
+    y_s = data_loaded[target_col]
 
     return {
         "id": dataset_id,
@@ -183,7 +185,10 @@ def load_bnlearn_dataset(dataset_name: str) -> dict:
     }
 
 
-def load_pgmpy_dataset(dataset_name: str) -> dict:
+def load_pgmpy_dataset(
+    dataset_name: str,
+    target_col: Optional[str] = None,
+) -> dict:
     """Load a dataset from pgmpy. (default to regression task)
 
     Args:
@@ -198,11 +203,10 @@ def load_pgmpy_dataset(dataset_name: str) -> dict:
     data_loaded = data_model.simulate(n_samples=10000, seed=42)
 
     # ===== Get the features and target variables =====
-    X_df = data_loaded
-    # pgmpy may return the features in different orders
-    X_df = X_df[X_df.columns.sort_values()]
-    # Use a dummy target variable
-    y_s = pd.Series(np.ones(X_df.shape[0]) * DUMMY_TARGET)
+    # Use the last column as target unless specified
+    target_col = target_col if target_col in data_loaded.columns else data_loaded.columns[-1]
+    X_df = data_loaded.drop(target_col, axis=1)
+    y_s = data_loaded[target_col]
 
     return {
         "id": dataset_id,

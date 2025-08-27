@@ -8,6 +8,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import (LabelEncoder, MinMaxScaler, OneHotEncoder, OrdinalEncoder, QuantileTransformer,
                                    StandardScaler)
 
+from ..utils.preprocessing import IdentityEncoder
+
 
 class BaseTransform:
     """Abstract base class for all data transformations.
@@ -395,6 +397,8 @@ class CategoryTransform(BaseTransform):
             case "ordinal":
                 # This results in a single column of integers (0 to n_categories - 1) per feature.
                 self._encoder = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+            case "identity":
+                self._encoder = IdentityEncoder()
             case _:
                 raise ValueError(f"Invalid strategy '{strategy}'.")
 
@@ -500,6 +504,8 @@ class TargetTransform(BaseTransform):
                 self._encoder = LabelEncoder()
             case "regression":
                 self._encoder = StandardScaler(copy=copy, with_mean=with_mean, with_std=with_std)
+            case "unsupervision":
+                self._encoder = IdentityEncoder()
             case _:
                 raise ValueError(f"Invalid task '{task}'.")
 

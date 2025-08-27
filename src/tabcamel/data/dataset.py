@@ -446,6 +446,10 @@ class TabularDataset:
         if split_mode in ["random", "stratified"]:
             if train_size is None and test_size is None:
                 raise ValueError("Either train size or test size must be provided for unfixed split.")
+            # Additional validation for stratified splitting
+            if split_mode == "stratified":
+                if self._task_type == "unsupervision":
+                    raise ValueError("Stratified splitting is not applicable for unsupervised tasks.")
         elif split_mode == "fixed":
             if indices_train is None or indices_test is None:
                 raise ValueError("Train and test indices must be provided for fixed split.")
@@ -458,44 +462,38 @@ class TabularDataset:
 
         # ===== Split the dataset without preset indices =====
         if split_mode in ["random", "stratified"]:
-            if self._task_type == "unsupervision":
-                X = self.data_df
-                X_train, X_test = train_test_split(
-                    X,
-                    train_size=train_size,
-                    test_size=test_size,
-                    random_state=random_state,
-                )
-                train_df = X_train
-                test_df = X_test
-            else:
-                X = self.data_df.drop(self._target_col, axis=1)
-                y = self.data_df[self._target_col]
-                # IMPORTANT: stratify does not guarantee all classes are included in both train and test set
-                X_train, X_test, y_train, y_test = train_test_split(
-                    X,
-                    y,
-                    train_size=train_size,
-                    test_size=test_size,
-                    random_state=random_state,
-                    stratify=y if split_mode == "stratified" else None,
-                )
-                train_df = X_train
-                train_df[self._target_col] = y_train
-                test_df = X_test
-                test_df[self._target_col] = y_test
+            # For supervised tasks, use stratification if requested
+            stratify_param = self.data_df[self._target_col] if split_mode == "stratified" else None
 
-                # === Check if all classes are included in both train and test set ===
-                if split_mode == "stratified":
-                    classes_full = set(y.unique())
-                    classes_in_train = set(y_train.unique())
-                    classes_in_test = set(y_test.unique())
-                    if classes_full != classes_in_train:
-                        classes_diff = classes_full - classes_in_train
-                        raise ValueError(f"Training set does not include all classes, missing: {classes_diff}.")
-                    if classes_full != classes_in_test:
-                        classes_diff = classes_full - classes_in_test
-                        raise ValueError(f"Test set does not include all classes, missing: {classes_diff}.")
+            # Split indices instead of the actual data for better memory efficiency
+            train_indices, test_indices = train_test_split(
+                self.data_df.index,
+                train_size=train_size,
+                test_size=test_size,
+                random_state=random_state,
+                stratify=stratify_param,
+            )
+
+            # Use .loc for efficient indexing
+            train_df = self.data_df.loc[train_indices].copy()
+            test_df = self.data_df.loc[test_indices].copy()
+
+            # === Check if all classes are included in both train and test set ===
+            if split_mode == "stratified":
+                y_train = train_df[self._target_col]
+                y_test = test_df[self._target_col]
+
+                # Use pandas methods for faster set operations
+                classes_full = set(self.data_df[self._target_col].unique())
+                classes_in_train = set(y_train.unique())
+                classes_in_test = set(y_test.unique())
+
+                if classes_full != classes_in_train:
+                    classes_diff = classes_full - classes_in_train
+                    raise ValueError(f"Training set does not include all classes, missing: {classes_diff}.")
+                if classes_full != classes_in_test:
+                    classes_diff = classes_full - classes_in_test
+                    raise ValueError(f"Test set does not include all classes, missing: {classes_diff}.")
         # ===== Split the dataset with preset indices =====
         elif split_mode == "fixed":
             train_df = self.data_df.loc[indices_train]

@@ -52,8 +52,6 @@ warnings.formatwarning = color_formatwarning
 # =                    Dataset Information                       =
 # =                                                              =
 # ================================================================
-DUMMY_TARGET = 12138
-
 dataset2openml_id = {
     # Classification
     "qsar-biodeg"                          : 46952,

@@ -628,12 +628,13 @@ class TabularDataset:
 
         Args:
             dataset (TabularDataset): The dataset to get the cardinality from.
+            cat_feature_list (list): List of categorical features.
 
         Returns:
             list: List of cardinalities for each categorical feature.
         """
         cardinality_list_ordered = []
-        for col in dataset.X_df.columns:
+        for col in dataset.data_df.columns:
             if col in cat_feature_list:
                 cardinality_list_ordered.append(dataset.data_df[col].nunique())
 

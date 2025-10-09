@@ -92,7 +92,6 @@ dataset2openml_id = {
     "Sberbank_Russian_Housing_Market": 46787,
     "Ailerons"                       : 296,
     "elevators"                      : 216,
-    "california_housing"             : 43939,
     "house_16H"                      : 574,
     "house_sales"                    : 42092,
     "wine_quality"                   : 46964,

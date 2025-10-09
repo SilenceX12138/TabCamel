@@ -462,8 +462,14 @@ class CategoryTransform(BaseTransform):
         )
         print(enc.get_feature_names_out(["gender", "group"]))
         """
+        # === Extract the encoded categorical features ===
         categorical_feature_list_encoded = self._encoder.get_feature_names_out(self.categorical_feature_list)
         cat_df = data_df[categorical_feature_list_encoded]
+
+        # === Inverse transform the categorical features ===
+        # For OrdinalEncoder, the input needs imputation as it cannot handle NaN values.
+        if self.strategy == "ordinal":
+            cat_df = cat_df.fillna(self._encoder.unknown_value)
         cat_df_inverse_transformed = self._encoder.inverse_transform(cat_df)
         cat_df_inverse_transformed = pd.DataFrame(
             cat_df_inverse_transformed,
@@ -471,6 +477,7 @@ class CategoryTransform(BaseTransform):
             index=data_df.index,
         )
 
+        # === Combine the inverse transformed categorical features with the other features ===
         data_df_inverse_transformed = data_df
         data_df_inverse_transformed = data_df_inverse_transformed.drop(categorical_feature_list_encoded, axis=1)
         data_df_inverse_transformed = pd.concat([data_df_inverse_transformed, cat_df_inverse_transformed], axis=1)

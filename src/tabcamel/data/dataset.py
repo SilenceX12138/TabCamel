@@ -86,9 +86,11 @@ class TabularDataset:
         self._update_dataset_properties()
 
     def _sanity_check(self, task_type: str, target_col: str | None) -> None:
-        if task_type not in ["classification", "regression"]:
-            raise ValueError(f"Task type {task_type} not recognised. Must be either 'classification' or 'regression'.")
-        if target_col is None:
+        if task_type not in ["classification", "regression", "unsupervision"]:
+            raise ValueError(f"Task type {task_type} not recognised.")
+        if target_col is not None and task_type in ["unsupervision"]:
+            raise ValueError(f"Target column {target_col} not allowed for unsupervised tasks.")
+        if target_col is None and task_type not in ["unsupervision"]:
             warnings.warn(
                 "Target column not provided. The last column is considered as the target and will be renamed to 'target'.",
                 UserWarning,
@@ -112,12 +114,22 @@ class TabularDataset:
 
     def _init_data_df(self, data_df: pd.DataFrame | None) -> None:
         """Initialize the data DataFrame by loading the dataset."""
+        # === Load the dataset if not provided ===
+        data_df = self._load_data_df(data_df)
+
+        # === Format the DataFrame ===
+        data_df = self._format_data_df(data_df)
+
+        # === Update the DataFrame property ===
+        self._data_df = data_df
+
+    def _load_data_df(self, data_df: pd.DataFrame | None) -> pd.DataFrame:
         if data_df is None:
             dataset = load_tabular_dataset(self._dataset_name, self._target_col, self._metafeature_dict)
             data_source = dataset["data_source"]
             data_id = dataset["data_id"]
 
-            # === Create a pandas DataFrame from the dataset ===
+            # Create a pandas DataFrame from the dataset
             data_dict = dataset["data_dict"]
             data_df = pd.concat([data_dict["X"], data_dict["y"]], axis=1)
         else:
@@ -126,24 +138,32 @@ class TabularDataset:
         self._data_source = data_source
         self._data_id = data_id
 
-        # === Rename the target column to "target" ===
-        original_target = self._target_col if self._target_col is not None else data_df.columns[-1]
-        if original_target not in data_df.columns:
-            raise ValueError(f"Target column '{original_target}' not found in the dataset. Please check the dataset.")
-        self._target_col = "target"
-        data_df = data_df.rename(columns={original_target: self._target_col})
+        return data_df
 
-        # === Ensure the target column is the last column ===
-        if self._target_col != data_df.columns[-1]:
-            column_list = list(data_df.columns)
-            column_list.remove(self._target_col)
-            column_list.append(self._target_col)
-            data_df = data_df[column_list]
+    def _format_data_df(self, data_df: pd.DataFrame) -> pd.DataFrame:
+        # === Prepare the target column ===
+        if self._task_type != "unsupervision":
+            # Rename the target column to "target"
+            original_target = self._target_col if self._target_col is not None else data_df.columns[-1]
+            if original_target not in data_df.columns:
+                raise ValueError(
+                    f"Target column '{original_target}' not found in the dataset. Please check the dataset."
+                )
+            self._target_col = "target"
+            data_df = data_df.rename(columns={original_target: self._target_col})
+
+            # Ensure the target column is the last column
+            if self._target_col != data_df.columns[-1]:
+                column_list = list(data_df.columns)
+                column_list.remove(self._target_col)
+                column_list.append(self._target_col)
+                data_df = data_df[column_list]
+
+        # === Align the format of dataframe ===
         # All column names are strings
         data_df.columns = data_df.columns.astype(str)
 
-        # === Update the DataFrame ===
-        self._data_df = data_df
+        return data_df
 
     def _parse_metafeatures(self) -> dict:
         """Parse the metafeatures of the dataset.
@@ -156,17 +176,29 @@ class TabularDataset:
         """
         # Parse the metafeatures
         self._is_tensor = self._metafeature_dict.get("is_tensor", False)
-        self._col2type = self._metafeature_dict.get("col2type", self._infer_column_types())
         self._data_source = self._metafeature_dict.get("source", self._data_source)
         self._data_id = self._metafeature_dict.get("id", self._data_id)
 
+        # Only infer column types if not provided to avoid expensive computation
+        # dict.get will compute default value before check the key availability
+        if "col2type" in self._metafeature_dict:
+            self._col2type = self._metafeature_dict["col2type"]
+        else:
+            self._col2type = self._infer_column_types()
+
         # Parse the directly derived attributes from metafeatures
-        self._numerical_feature_list = [
-            col for col, type in self.col2type.items() if (col != self._target_col and type == stype.numerical)
-        ]
-        self._categorical_feature_list = [
-            col for col, type in self.col2type.items() if (col != self._target_col and type == stype.categorical)
-        ]
+        if "numerical_feature_list" in self._metafeature_dict:
+            self._numerical_feature_list = self._metafeature_dict["numerical_feature_list"]
+        else:
+            self._numerical_feature_list = [
+                col for col, type in self._col2type.items() if (col != self._target_col and type == stype.numerical)
+            ]
+        if "categorical_feature_list" in self._metafeature_dict:
+            self._categorical_feature_list = self._metafeature_dict["categorical_feature_list"]
+        else:
+            self._categorical_feature_list = [
+                col for col, type in self._col2type.items() if (col != self._target_col and type == stype.categorical)
+            ]
         self._num_numerical_features = len(self._numerical_feature_list)
         self._num_categorical_features = len(self._categorical_feature_list)
 
@@ -175,6 +207,8 @@ class TabularDataset:
             "col2type": self._col2type,
             "source": self._data_source,
             "id": self._data_id,
+            "numerical_feature_list": self._numerical_feature_list,
+            "categorical_feature_list": self._categorical_feature_list,
         }
 
     def _update_data_df(self) -> None:
@@ -262,6 +296,9 @@ class TabularDataset:
             raise ValueError(
                 f"Number of samples ({sample_size}) is less than the number of classes ({self._num_classes}) when using stratified subsampling."
             )
+        # === Check if the sampling mode is compatible with the task ===
+        if self._task_type == "unsupervision" and sample_mode not in ["fixed", "random", "uniform"]:
+            raise ValueError(f"Sampling mode '{sample_mode}' is not allowed for unsupervised tasks.")
 
         # ===== Random sampling =====
         if sample_mode == "random":
@@ -409,6 +446,10 @@ class TabularDataset:
         if split_mode in ["random", "stratified"]:
             if train_size is None and test_size is None:
                 raise ValueError("Either train size or test size must be provided for unfixed split.")
+            # Additional validation for stratified splitting
+            if split_mode == "stratified":
+                if self._task_type == "unsupervision":
+                    raise ValueError("Stratified splitting is not applicable for unsupervised tasks.")
         elif split_mode == "fixed":
             if indices_train is None or indices_test is None:
                 raise ValueError("Train and test indices must be provided for fixed split.")
@@ -421,27 +462,32 @@ class TabularDataset:
 
         # ===== Split the dataset without preset indices =====
         if split_mode in ["random", "stratified"]:
-            X = self.data_df.drop(self._target_col, axis=1)
-            y = self.data_df[self._target_col]
-            # IMPORTANT: stratify does not guarantee all classes are included in both train and test set
-            X_train, X_test, y_train, y_test = train_test_split(
-                X,
-                y,
+            # For supervised tasks, use stratification if requested
+            stratify_param = self.data_df[self._target_col] if split_mode == "stratified" else None
+
+            # Split indices instead of the actual data for better memory efficiency
+            train_indices, test_indices = train_test_split(
+                self.data_df.index,
                 train_size=train_size,
                 test_size=test_size,
                 random_state=random_state,
-                stratify=y if split_mode == "stratified" else None,
+                stratify=stratify_param,
             )
-            train_df = X_train
-            train_df[self._target_col] = y_train
-            test_df = X_test
-            test_df[self._target_col] = y_test
+
+            # Use .loc for efficient indexing
+            train_df = self.data_df.loc[train_indices].copy()
+            test_df = self.data_df.loc[test_indices].copy()
 
             # === Check if all classes are included in both train and test set ===
             if split_mode == "stratified":
-                classes_full = set(y.unique())
+                y_train = train_df[self._target_col]
+                y_test = test_df[self._target_col]
+
+                # Use pandas methods for faster set operations
+                classes_full = set(self.data_df[self._target_col].unique())
                 classes_in_train = set(y_train.unique())
                 classes_in_test = set(y_test.unique())
+
                 if classes_full != classes_in_train:
                     classes_diff = classes_full - classes_in_train
                     raise ValueError(f"Training set does not include all classes, missing: {classes_diff}.")
@@ -491,15 +537,17 @@ class TabularDataset:
         col2type = {}
         for col in self.X_df.columns:
             # ptypes.is_numeric_dtype treats boolean as numerical, which is not desired
-            if ptypes.is_numeric_dtype(self.X_df[col]) and ptypes.infer_dtype(self.X_df[col]) != "boolean":
+            if self.is_tensor or (
+                ptypes.is_numeric_dtype(self.X_df[col]) and ptypes.infer_dtype(self.X_df[col]) != "boolean"
+            ):
                 col2type[col] = stype.numerical
             else:
                 col2type[col] = stype.categorical
 
-        if self.task_type == "classification":
-            col2type[self.target_col] = stype.categorical
-        else:
-            col2type[self.target_col] = stype.numerical
+        if self._task_type == "classification":
+            col2type[self._target_col] = stype.categorical
+        elif self._task_type == "regression":
+            col2type[self._target_col] = stype.numerical
 
         return col2type
 
@@ -527,7 +575,7 @@ class TabularDataset:
         if self.is_tensor:
             raise ValueError("Cannot drop class after converting the dataset to tensor.")
         if self._task_type != "classification":
-            raise ValueError("Cannot drop class for regression task.")
+            raise ValueError("Cannot drop class for non-classification task.")
         if class_id not in self.data_df[self._target_col].unique():
             raise ValueError(f"Class {class_id} not found in the dataset.")
 
@@ -580,12 +628,13 @@ class TabularDataset:
 
         Args:
             dataset (TabularDataset): The dataset to get the cardinality from.
+            cat_feature_list (list): List of categorical features.
 
         Returns:
             list: List of cardinalities for each categorical feature.
         """
         cardinality_list_ordered = []
-        for col in dataset.X_df.columns:
+        for col in dataset.data_df.columns:
             if col in cat_feature_list:
                 cardinality_list_ordered.append(dataset.data_df[col].nunique())
 
@@ -620,7 +669,7 @@ class TabularDataset:
         """Return the type of task.
 
         Returns:
-            str: Type of task (classification or regression).
+            str: Type of task (classification, regression, unsupervision).
         """
         return self._task_type
 
@@ -640,6 +689,9 @@ class TabularDataset:
         Returns:
             pd.DataFrame: DataFrame containing the features.
         """
+        if self._task_type == "unsupervision":
+            return self.data_df
+
         return self.data_df.drop(self._target_col, axis=1)
 
     @property
@@ -647,8 +699,11 @@ class TabularDataset:
         """Return the Series containing the target.
 
         Returns:
-            pd.Series: Series containing the target.
+            pd.Series | None: Series containing the target. Or None if unsupervised.
         """
+        if self._task_type == "unsupervision":
+            return None
+
         return self.data_df[self._target_col]
 
     @property
@@ -671,7 +726,7 @@ class TabularDataset:
 
     @property
     def num_features(self) -> int:
-        """Return the number of features in the dataset.
+        """Return the number of features in the dataset (excluding the target).
 
         Returns:
             int: Number of features in the dataset.
@@ -734,7 +789,7 @@ class TabularDataset:
 
     @property
     def numerical_feature_list(self) -> list:
-        """Return the list of numerical features.
+        """Return the list of numerical features (excluding the target).
 
         Returns:
             list: List of numerical features.
@@ -743,7 +798,7 @@ class TabularDataset:
 
     @property
     def categorical_feature_list(self) -> list:
-        """Return the list of categorical features.
+        """Return the list of categorical features (excluding the target).
 
         Returns:
             list: List of categorical features.
